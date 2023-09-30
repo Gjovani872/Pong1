@@ -1,7 +1,6 @@
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
-public class KL implements KeyListener {
+public class KeyListener implements java.awt.event.KeyListener {
     private boolean keypressed[] = new boolean [128]; //has 128 characters that we can use in ASCII key code
 
     @Override
@@ -11,8 +10,8 @@ public class KL implements KeyListener {
 
     @Override
     public void keyPressed (KeyEvent e) {
-        keypressed[e.getKeyCode()] = true; //when the key is pressed
-        System.out.println("Presesd a key");
+        keypressed[e.getKeyCode()] = true; //when the key is pressed, int type
+//        System.out.println("Presesd a key");
     }
 
     @Override

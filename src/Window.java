@@ -1,79 +1,116 @@
 import javax.swing.JFrame;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
-public class Window extends JFrame implements Runnable{
-
+public class Window extends JFrame implements Runnable {
+    public boolean isGameRunning = true;
     Graphics2D g2;
 
-    Rectangle playerOne,ai,ball;
-    KL keyListener = new KL();
-    public Window(){
-        this.setSize(Constants.SCREEN_WIDTH,Constants.SCREEN_HEIGHT);//Here we access the class that has the static variables and we can easily use that class to change stuff and
-                                                                        //keep things more organized
+    Rectangle playerOne;
+    Rectangle playerTwo;
+    Rectangle ballRectangle;
+    KeyListener keyListener = new KeyListener();
+
+    public Ball ball;
+
+    public MovePlayers playerMove;
+
+    public MovePlayers playerMove2;
+    public Bot playerMoveBot;
+    public Text leftPlayerScore;
+    public Text rightPLayerScore;
+
+    public Window () {
+        this.setSize(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT);//Here we access the class that has the static variables and we can easily use that class to change stuff and
+        //keep things more organized
+
         this.setTitle(Constants.TITLE);
         this.setResizable(false);
         this.setVisible(true);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.addKeyListener(keyListener);
+        Constants.UPPER_HEIGHT = this.getInsets().top;
+        Constants.INSETS_BOTTOM = this.getInsets().bottom;
+
         g2 = (Graphics2D) this.getGraphics();
 
         int total = Constants.SCREEN_WIDTH + Constants.SCREEN_HEIGHT;
+        playerOne = new Rectangle(Constants.BOARD_PADDING, 40, Constants.BOARD_WIDTH, Constants.BOARD_HEIGHT, Color.yellow);
+        playerMove = new MovePlayers(playerOne, this.keyListener);
+        playerTwo = new Rectangle(Constants.SCREEN_WIDTH - Constants.BOARD_PADDING - Constants.BOARD_WIDTH, 40, Constants.BOARD_WIDTH, Constants.BOARD_HEIGHT, Color.RED);
+        playerMove2 = new MovePlayers(playerTwo, this.keyListener);
+        ballRectangle = new Rectangle(Constants.SCREEN_WIDTH / 2, Constants.SCREEN_HEIGHT / 2, Constants.BALL_SIZE, Constants.BALL_SIZE, Color.BLUE);
+        leftPlayerScore = new Text(0, new Font("Times New Roman", Font.PLAIN, Constants.TEXT_SIZE),10,Constants.TEXT_Y_POSITION);
+        rightPLayerScore = new Text(0, new Font("Times New Roman",Font.PLAIN, Constants.TEXT_SIZE),Constants.SCREEN_WIDTH - 10 - 16,Constants.TEXT_Y_POSITION);
+        ball = new Ball(ballRectangle, playerOne, playerTwo,leftPlayerScore,rightPLayerScore);
+        playerMoveBot = new Bot(new MovePlayers(playerTwo), ballRectangle);
 
-        playerOne = new Rectangle(0,Constants.SCREEN_HEIGHT / 2,40,60,Color.WHITE);
-        ai = new Rectangle(Constants.SCREEN_WIDTH - 40,Constants.SCREEN_HEIGHT / 2,40,60,Color.RED);
-        ball = new Rectangle(Constants.SCREEN_WIDTH / 2,Constants.SCREEN_HEIGHT / 2,10,20,Color.WHITE);
+
+
+
 
 
     }
 
+    public void stopGame(){
+        isGameRunning = false;
+    }
 
-    public void update(double dt){
-      //  System.out.println("" + dt + " seconds passed since the last frame");
-        //System.out.println(1 / dt + " fps");
-        //g2.fillArc(0,0,Constants.SCREEN_WIDTH,Constants.SCREEN_HEIGHT,50,100);
-        g2.setColor(Color.BLACK);
-        g2.fillRect(0,0,Constants.SCREEN_WIDTH,Constants.SCREEN_HEIGHT);
 
-//        if(keyListener.isKeyPressed(KeyEvent.VK_UP)){
-//            System.out.println("THe user is pressing the up arrow");
-//        }else if(keyListener.isKeyPressed(KeyEvent.VK_DOWN)){
-//            System.out.println("The user is pressing the down arrow");
-//        }
-        Rectangle rect = new Rectangle(50,Constants.SCREEN_HEIGHT - 100,40,80,Color.BLUE);
-        //if we wanted to draw the rectangle down we would need to get the height and then - something so it still
-        //remains a positive number because y starts from 0 and goes to how long the height is
-        //ex : Constants.HEIGHT - 100
-        /*
-        One line above we create a reference variable to the rectangle object in the heap
-        and now we have a controller that we can use to controll the TV ie its behaviors
-        */
+    public void updateGame (double dt) {
+        Image bufferImage = createImage(getWidth(), getHeight());
+        Graphics bufferGraphics = bufferImage.getGraphics();
+        this.draw(bufferGraphics);
+        g2.drawImage(bufferImage, 0, 0, this);
+
+
+        playerMove.updatePlayers(dt);
+        if (MainMenu.isBotTraining){
+            playerMoveBot.update(dt);
+        }else{
+            playerMove2.updatePlayer2(dt);
+        }
+
+
 //        rect.draw(g2);//pass it the graphics object so that the rectangle can draw itself
         playerOne.draw(g2);
-        ai.draw(g2);
-        ball.draw(g2);
+
+        playerTwo.draw(g2);
+        ball.update2(dt);
+    }
+
+    public void draw (Graphics g) {
+
+        Graphics2D graphics = (Graphics2D) g;
+        graphics.setColor(Color.BLACK);
+        graphics.fillRect(0, 0, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT);
+Font font = new Font("Times New Roman", Font.BOLD,14);
+
+
+
+        leftPlayerScore.draw(graphics);
+        rightPLayerScore.draw(graphics);
+        playerOne.draw(graphics);
+        playerTwo.draw(graphics);
+        ballRectangle.draw(graphics);
+
     }
 
 
     @Override
     public void run () {
 
-            double lastFrameTime = 0.0;
-            while(true){
-                double time = Time.getTIme();//time passed since starting our program
-                double deltaTime = time - lastFrameTime;
-                lastFrameTime = time;
+        double lastFrameTime = 0.0;
+        while (isGameRunning) {
+            double time = Time.getTIme();//time passed since starting our program
+            double deltaTime = time - lastFrameTime;
+            lastFrameTime = time;
 
-                update(deltaTime);
+            updateGame(deltaTime);
 
-                try {
-                    Thread.sleep(30);
-                }catch(Exception e){
-                    System.out.println("Not sleeping");
-                }
 
-            }
         }
+        this.dispose();
+        return;
     }
+}
 
